@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DSM Terminal</title>
+  <link rel="stylesheet" href="app.css">
+</head>
+<body>
+  <main class="terminal-shell">
+    <div id="status" class="status">Connecting...</div>
+    <pre id="output" class="output" aria-live="polite"></pre>
+    <form id="commandForm" class="terminal-input-row">
+      <label class="prompt" for="commandInput" id="promptLabel">$</label>
+      <input id="commandInput" name="command" type="text" autocomplete="off" spellcheck="false" placeholder="" aria-label="Shell command">
+    </form>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

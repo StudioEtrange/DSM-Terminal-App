@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DSM Terminal</title>
+  <link rel="stylesheet" href="app.css">
+</head>
+<body>
+  <main class="terminal-shell">
+    <button id="helpButton" class="icon-button help-button" type="button" aria-label="Terminal help">?</button>
+    <div id="status" class="status">Connecting...</div>
+    <pre id="output" class="output" aria-live="polite"></pre>
+    <form id="commandForm" class="terminal-input-row">
+      <label class="prompt" for="commandInput" id="promptLabel">&gt;</label>
+      <input id="commandInput" name="command" type="text" autocomplete="off" spellcheck="false" placeholder="" aria-label="Terminal input">
+    </form>
+  </main>
+
+  <div id="helpModal" class="modal hidden" aria-hidden="true">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+      <div class="modal-header">
+        <h1 id="helpTitle">Terminal Help</h1>
+      </div>
+      <div class="modal-body">
+        <div class="status-row">
+          <span class="helper-label">Passwordless sudo status</span>
+          <span id="sudoStatusBadge" class="sudo-badge">Checking...</span>
+        </div>
+        <p class="warning">
+          This terminal runs as the `sc-dsm-terminal` service account. If you want `sudo -i` to work without a password, enable passwordless sudo for that account over SSH using the helper script below.
+        </p>
+        <div class="helper-block">
+          <div class="helper-label">Enable passwordless sudo</div>
+          <div class="command-row">
+            <code id="enableSudoCommand">/var/packages/dsm-terminal/scripts/enable_passwordless_sudo.sh</code>
+            <button class="secondary-button copy-button" type="button" data-copy-target="enableSudoCommand">Copy</button>
+          </div>
+        </div>
+        <div class="helper-block">
+          <div class="helper-label">Disable passwordless sudo</div>
+          <div class="command-row">
+            <code id="disableSudoCommand">/var/packages/dsm-terminal/scripts/disable_passwordless_sudo.sh</code>
+            <button class="secondary-button copy-button" type="button" data-copy-target="disableSudoCommand">Copy</button>
+          </div>
+        </div>
+        <div id="helpStatus" class="helper-note"></div>
+        <p class="helper-note">Run these as `root` over SSH on the NAS.</p>
+      </div>
+      <div class="modal-actions">
+        <button id="closeHelpButton" type="button" class="primary-button">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
