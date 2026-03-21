@@ -26,3 +26,11 @@
 ## Notes
 To enable `sudo` / privilege escalation:
 - Add the service account to the `sudoers` file - instructions are available inside the app (click the `?`)
+
+---
+
+## Disclaimer
+- This project is provided “as is” without any warranty or guarantees
+- Use at your own risk, especially when enabling `sudo` or modifying system permissions
+- The author is not responsible for any damage, data loss, or misconfiguration resulting from use of this software
+- Not affiliated with or endorsed by Synology
