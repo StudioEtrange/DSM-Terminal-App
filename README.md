@@ -25,7 +25,7 @@
 
 ## Notes
 To enable `sudo` / privilege escalation:
-- Add the service account to the `sudoers` file - instructions are available inside the app (click the `?`)
+- Add the service account to `sudoers` - instructions are available inside the app (click the `?`)
 
 ---
 
