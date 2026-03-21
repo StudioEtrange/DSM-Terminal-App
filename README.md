@@ -29,6 +29,11 @@ To enable `sudo` / privilege escalation:
 
 ---
 
+## Requirements
+- Python
+
+---
+
 ## Disclaimer
 - This project is provided “as is” without any warranty or guarantees
 - Use at your own risk, especially when enabling `sudo` or modifying system permissions
