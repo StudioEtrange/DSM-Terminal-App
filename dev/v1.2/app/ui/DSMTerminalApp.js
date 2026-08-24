@@ -1,6 +1,6 @@
 Ext.ns("SYNO.SDS.App.DSMTerminal");
 
-var DSM_TERMINAL_VERSION = "0.1.2-42";
+var DSM_TERMINAL_VERSION = "0.1.3-0";
 
 SYNO.SDS.App.DSMTerminal = Ext.extend(SYNO.SDS.AppWindow, {
     constructor: function () {

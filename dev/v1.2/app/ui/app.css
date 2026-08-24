@@ -48,7 +48,7 @@ body {
   flex: 0 0 auto;
 }
 
-.topbar.hidden {
+.status.hidden {
   display: none;
 }
 

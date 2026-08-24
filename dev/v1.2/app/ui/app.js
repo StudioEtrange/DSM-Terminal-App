@@ -1,6 +1,6 @@
 const mount = document.getElementById("terminalMount");
 const statusNode = document.getElementById("status");
-const topbarNode = document.getElementById("topbar");
+const openAsCurrentUserButton = document.getElementById("openAsCurrentUser");
 
 let sessionId = "";
 let cursor = 0;
@@ -50,9 +50,7 @@ function focusTerminal() {
 function setStatus(message, isError = false) {
   statusNode.textContent = message || "";
   statusNode.classList.toggle("error", isError);
-  if (topbarNode) {
-    topbarNode.classList.toggle("hidden", !message);
-  }
+  statusNode.classList.toggle("hidden", !message);
 }
 
 function base64Encode(value) {
@@ -301,7 +299,7 @@ async function sendResize() {
   }
 }
 
-async function initSession() {
+async function initSession(asCurrentUser = false) {
   const deadline = Date.now() + INIT_TIMEOUT_MS;
   setStatus("PTY service starting...");
 
@@ -309,6 +307,7 @@ async function initSession() {
     try {
       const payload = await callApi({
         action: "create",
+        as_current_user: asCurrentUser,
         cols: terminalCols(),
         rows: terminalRows()
       });
@@ -337,6 +336,30 @@ async function initSession() {
   }
 
   setStatus("Failed to initialize PTY session: timed out waiting for PTY service", true);
+}
+
+async function openAsCurrentUser() {
+  if (openAsCurrentUserButton) {
+    openAsCurrentUserButton.disabled = true;
+  }
+
+  try {
+    if (sessionId) {
+      await callApi({
+        action: "close",
+        sid: sessionId
+      });
+    }
+    sessionId = "";
+    cursor = 0;
+    pendingWrites = [];
+    terminal.reset();
+    await initSession(true);
+  } finally {
+    if (openAsCurrentUserButton) {
+      openAsCurrentUserButton.disabled = false;
+    }
+  }
 }
 
 function initTerminal() {
@@ -429,6 +452,12 @@ window.addEventListener("beforeunload", () => {
     sid: sessionId
   }));
 });
+
+if (openAsCurrentUserButton) {
+  openAsCurrentUserButton.addEventListener("click", () => {
+    void openAsCurrentUser();
+  });
+}
 
 initTerminal();
 void initSession();

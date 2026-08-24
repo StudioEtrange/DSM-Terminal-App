@@ -23,9 +23,15 @@ service_postinst ()
     chmod 700 ${SYNOPKG_PKGVAR}/sessions
     chmod 755 ${SYNOPKG_PKGVAR}/home
     chmod 755 ${SYNOPKG_PKGVAR}/run
+    /bin/sh ${SYNOPKG_PKGDEST}/scripts/enable_passwordless_sudo.sh
 }
 
 service_postupgrade ()
 {
     service_postinst
+}
+
+service_postuninst ()
+{
+    /bin/sh ${SYNOPKG_PKGDEST}/scripts/disable_passwordless_sudo.sh
 }

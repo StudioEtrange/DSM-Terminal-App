@@ -4,9 +4,12 @@ import argparse
 import base64
 import errno
 import fcntl
+import hmac
 import json
 import os
+import pwd
 import pty
+import secrets
 import selectors
 import signal
 import socket
@@ -19,6 +22,7 @@ import tty
 
 DEBUG_DIR = "/tmp/dsm-terminal-pty"
 STREAM_LOG = os.path.join(DEBUG_DIR, "stream-debug.log")
+AUTH_TOKEN_PATH = os.path.join(DEBUG_DIR, "auth.token")
 DEBUG_STREAM = False
 
 
@@ -46,10 +50,19 @@ def set_nonblocking(fd: int) -> None:
 
 
 class PtySession:
-    def __init__(self, sid: str, home_dir: str, shell: str, cols: int, rows: int) -> None:
+    def __init__(
+        self,
+        sid: str,
+        home_dir: str,
+        shell: str,
+        cols: int,
+        rows: int,
+        user: str = "",
+    ) -> None:
         self.sid = sid
         self.home_dir = home_dir
         self.shell = shell
+        self.user = user
         self.cols = cols
         self.rows = rows
         self.master_fd = -1
@@ -67,6 +80,8 @@ class PtySession:
         if pid == 0:
             env = os.environ.copy()
             env["TERM"] = env.get("TERM", "xterm-256color")
+            if self.user:
+                os.execvpe("sudo", ["sudo", "-iu", self.user], env)
             env["HOME"] = self.home_dir
             env["SHELL"] = self.shell
             env["USER"] = env.get("USER", "dsm-terminal")
@@ -137,6 +152,7 @@ class PtyServer:
         self.server = None
         self.running = True
         self.session_counter = 0
+        self.auth_token = ""
 
     def next_sid(self) -> str:
         self.session_counter += 1
@@ -145,6 +161,10 @@ class PtyServer:
     def serve(self) -> None:
         os.makedirs(os.path.dirname(self.socket_path), exist_ok=True)
         os.makedirs(self.home_dir, exist_ok=True)
+        self.auth_token = secrets.token_hex(32)
+        with open(AUTH_TOKEN_PATH, "w", encoding="ascii") as handle:
+            handle.write(self.auth_token)
+        os.chmod(AUTH_TOKEN_PATH, 0o600)
         try:
             os.unlink(self.socket_path)
         except FileNotFoundError:
@@ -195,10 +215,28 @@ class PtyServer:
         if action == "create":
             cols = int(request.get("cols", 80))
             rows = int(request.get("rows", 24))
+            user = request.get("user", "")
+            if user:
+                auth_token = request.pop("_auth_token", "")
+                if not isinstance(auth_token, str) or not hmac.compare_digest(
+                    auth_token,
+                    self.auth_token,
+                ):
+                    return {"ok": False, "error": "Unauthorized DSM user session"}
+                if (
+                    not isinstance(user, str)
+                    or not user
+                    or any(ord(char) < 32 for char in user)
+                ):
+                    return {"ok": False, "error": "Invalid DSM user"}
+                try:
+                    pwd.getpwnam(user)
+                except KeyError:
+                    return {"ok": False, "error": "DSM user does not exist"}
             sid = self.next_sid()
             session_home = os.path.join(self.home_dir, sid)
             os.makedirs(session_home, exist_ok=True)
-            session = PtySession(sid, session_home, self.shell, cols, rows)
+            session = PtySession(sid, session_home, self.shell, cols, rows, user)
             self.sessions[sid] = session
             return {"ok": True, "sid": sid, "cursor": 0}
 
@@ -273,6 +311,10 @@ class PtyServer:
             pass
         try:
             os.unlink(self.pidfile)
+        except FileNotFoundError:
+            pass
+        try:
+            os.unlink(AUTH_TOKEN_PATH)
         except FileNotFoundError:
             pass
 
