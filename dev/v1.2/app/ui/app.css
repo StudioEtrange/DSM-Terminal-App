@@ -48,12 +48,8 @@ body {
   flex: 0 0 auto;
 }
 
-.status.hidden {
+.topbar.hidden {
   display: none;
-}
-
-.topbar-actions {
-  flex: 0 0 auto;
 }
 
 .status {

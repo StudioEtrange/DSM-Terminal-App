@@ -1,6 +1,6 @@
 const mount = document.getElementById("terminalMount");
 const statusNode = document.getElementById("status");
-const openAsCurrentUserButton = document.getElementById("openAsCurrentUser");
+const topbarNode = document.getElementById("topbar");
 
 let sessionId = "";
 let cursor = 0;
@@ -12,6 +12,7 @@ let pollInFlight = false;
 let pollRequestedWhileBusy = false;
 let lastQueuedInput = "";
 let lastQueuedInputAt = 0;
+let openingAsCurrentUser = false;
 const INIT_RETRY_DELAY_MS = 350;
 const INIT_TIMEOUT_MS = 15000;
 const DUPLICATE_INPUT_WINDOW_MS = 90;
@@ -50,7 +51,9 @@ function focusTerminal() {
 function setStatus(message, isError = false) {
   statusNode.textContent = message || "";
   statusNode.classList.toggle("error", isError);
-  statusNode.classList.toggle("hidden", !message);
+  if (topbarNode) {
+    topbarNode.classList.toggle("hidden", !message);
+  }
 }
 
 function base64Encode(value) {
@@ -339,10 +342,11 @@ async function initSession(asCurrentUser = false) {
 }
 
 async function openAsCurrentUser() {
-  if (openAsCurrentUserButton) {
-    openAsCurrentUserButton.disabled = true;
+  if (openingAsCurrentUser) {
+    return;
   }
 
+  openingAsCurrentUser = true;
   try {
     if (sessionId) {
       await callApi({
@@ -356,9 +360,7 @@ async function openAsCurrentUser() {
     terminal.reset();
     await initSession(true);
   } finally {
-    if (openAsCurrentUserButton) {
-      openAsCurrentUserButton.disabled = false;
-    }
+    openingAsCurrentUser = false;
   }
 }
 
@@ -438,10 +440,20 @@ document.addEventListener("focusin", activateParentWindow);
 window.addEventListener("resize", sendResize);
 window.addEventListener("message", (event) => {
   const data = event && event.data;
-  if (!data || data.type !== "dsm-terminal-focus") {
+  if (!data) {
     return;
   }
-  focusTerminal();
+  if (data.type === "dsm-terminal-focus") {
+    focusTerminal();
+    return;
+  }
+  if (data.type === "dsm-terminal-open-current-user") {
+    if (event.source !== window.parent) {
+      return;
+    }
+    activateParentWindow();
+    void openAsCurrentUser();
+  }
 });
 window.addEventListener("beforeunload", () => {
   if (!sessionId) {
@@ -452,12 +464,6 @@ window.addEventListener("beforeunload", () => {
     sid: sessionId
   }));
 });
-
-if (openAsCurrentUserButton) {
-  openAsCurrentUserButton.addEventListener("click", () => {
-    void openAsCurrentUser();
-  });
-}
 
 initTerminal();
 void initSession();

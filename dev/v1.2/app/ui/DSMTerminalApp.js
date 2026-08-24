@@ -21,6 +21,12 @@ SYNO.SDS.App.DSMTerminal = Ext.extend(SYNO.SDS.AppWindow, {
             cls: "dsm-terminal-window",
             tools: [
                 {
+                    id: "open-current-user",
+                    qtip: "Open as current user",
+                    handler: this.onOpenAsCurrentUserToolClick,
+                    scope: this
+                },
+                {
                     id: "help",
                     handler: this.onHelpToolClick,
                     scope: this
@@ -36,6 +42,7 @@ SYNO.SDS.App.DSMTerminal = Ext.extend(SYNO.SDS.AppWindow, {
                 }
             ],
             listeners: {
+                render: this.styleOpenAsCurrentUserTool,
                 show: this.bindFrameActivation,
                 activate: this.onParentActivate,
                 deactivate: this.onParentDeactivate,
@@ -159,6 +166,35 @@ SYNO.SDS.App.DSMTerminal = Ext.extend(SYNO.SDS.AppWindow, {
             }, "*");
         } catch (e) {
         }
+    },
+
+    styleOpenAsCurrentUserTool: function () {
+        var tool = this.tools && this.tools["open-current-user"];
+        var dom = tool && tool.dom ? tool.dom : tool;
+
+        if (!dom) {
+            return;
+        }
+
+        dom.setAttribute("title", "Open as current user");
+        dom.setAttribute("aria-label", "Open as current user");
+        dom.style.backgroundImage = "url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxNiAxNiI+PHBhdGggZmlsbD0iIzViNjc3NSIgZD0iTTggOGEzIDMgMCAxIDAgMC02IDMgMyAwIDAgMCAwIDZabTAgMWMtMy4zIDAtNiAxLjctNiAzLjhWMTRoMTJ2LTEuMkMxNCAxMC43IDExLjMgOSA4IDlaIi8+PC9zdmc+)";
+        dom.style.backgroundPosition = "center";
+        dom.style.backgroundRepeat = "no-repeat";
+        dom.style.backgroundSize = "14px 14px";
+    },
+
+    onOpenAsCurrentUserToolClick: function () {
+        var frame = document.getElementById(this.iframeId);
+
+        if (!frame || !frame.contentWindow || !frame.contentWindow.postMessage) {
+            return;
+        }
+
+        frame.contentWindow.postMessage({
+            type: "dsm-terminal-open-current-user",
+            windowId: this.windowId
+        }, "*");
     },
 
     onHelpToolClick: function () {
